@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 
 #ifdef _WIN32
     #define CLEAR "cls"
@@ -9,66 +9,80 @@
 #endif
 
 typedef struct Node {
+    int dataType; 
     void* data;
     struct Node* next;
 } Node;
 
 typedef struct {
     Node* top;
-    size_t elementSize;
-    int dataType;
 } Stack;
 
-void initializeStack(Stack* stack, size_t elementSize, int dataType) {
+void initializeStack(Stack* stack) {
     stack->top = NULL;
-    stack->elementSize = elementSize;
-    stack->dataType = dataType;
 }
 
 int isEmpty(Stack* stack) {
     return stack->top == NULL;
 }
 
-void push(Stack* stack, void* value) {
+void push(Stack* stack, int dataType, void* value) {
     system(CLEAR);
     Node* newNode = (Node*)malloc(sizeof(Node));
     if (newNode == NULL) {
-        printf("Memory allocation failed!\n");
+        printf("Memory allocation failed in push!\n");
         return;
     }
 
-    newNode->data = malloc(stack->elementSize);
-    if (newNode->data == NULL) {
-        printf("Memory allocation failed!\n");
+    newNode->dataType = dataType;
+    if (dataType == 1) { 
+        newNode->data = malloc(sizeof(int));
+        if (newNode->data == NULL) {
+            printf("Memory allocation failed for number in push!\n");
+            free(newNode);
+            return;
+        }
+        memcpy(newNode->data, value, sizeof(int));
+    } else if (dataType == 2) { 
+        newNode->data = malloc(sizeof(char) * 100); 
+        if (newNode->data == NULL) {
+            printf("Memory allocation failed for string in push!\n");
+            free(newNode);
+            return;
+        }
+        strcpy((char*)newNode->data, (char*)value);
+    } else {
+        printf("Invalid data type in push!\n");
         free(newNode);
         return;
     }
-    memcpy(newNode->data, value, stack->elementSize); 
+
     newNode->next = stack->top;
     stack->top = newNode;
+
+    printf("Pushed.\n");
 }
 
 void pop(Stack* stack, void* value) {
     system(CLEAR);
     if (isEmpty(stack)) {
-        printf("Stack is empty!\n");
+        printf("Stack is empty in pop!\n");
         return;
     }
 
     Node* popNode = stack->top;
-    memcpy(value, popNode->data, stack->elementSize); 
+
+    if (popNode->dataType == 1) { 
+        memcpy(value, popNode->data, sizeof(int));
+    } else if (popNode->dataType == 2) { 
+        strcpy((char*)value, (char*)popNode->data);
+    }
+
     stack->top = stack->top->next;
     free(popNode->data);
     free(popNode);
-}
 
-void peek(Stack* stack, void* value) {
-    system(CLEAR);
-    if (isEmpty(stack)) {
-        printf("Stack is empty!\n");
-        return;
-    }
-    memcpy(value, stack->top->data, stack->elementSize); 
+    printf("\nPopped.\n");
 }
 
 void traverseStack(Stack* stack) {
@@ -79,163 +93,86 @@ void traverseStack(Stack* stack) {
     }
 
     Node* travNode = stack->top;
-    printf("Stack elements: ");
+    printf("Stack elements (top to bottom):\n");
     while (travNode != NULL) {
-        switch (stack->dataType) {
-            case 1:
-                printf("%d ", *(int*)travNode->data);
-                break;
-            case 2:
-                printf("%f ", *(float*)travNode->data);
-                break;
-            case 3:
-                printf("%c ", *(char*)travNode->data);
-                break;
-            case 4:
-                printf("%s ", (char*)travNode->data);
-                break;
-            default:
-                printf("Unknown data type.\n");
-                return;
+        if (travNode->dataType == 1) { 
+            printf("%d\n", *(int*)travNode->data);
+        } else if (travNode->dataType == 2) { 
+            printf("%s\n", (char*)travNode->data);
+        } else {
+            printf("Unknown data type in traverseStack!\n");
         }
         travNode = travNode->next;
     }
-    printf("\n");
+    printf("\nTraversed all nodes.\n");
 }
 
 int main() {
     Stack stack;
-    int dataType;
+    initializeStack(&stack);
 
-    printf("Enter the data type for the stack:\n");
-    printf("1. Integer\n");
-    printf("2. Float\n");
-    printf("3. Character\n");
-    printf("4. String\n");
-    scanf("%d", &dataType);
+    int choice, numValue, dataType;
+    char strValue[100];
 
-    size_t elementSize;
-    switch (dataType) {
-        case 1:
-            elementSize = sizeof(int);
-            break;
-        case 2:
-            elementSize = sizeof(float);
-            break;
-        case 3:
-            elementSize = sizeof(char);
-            break;
-        case 4:
-            elementSize = sizeof(char) * 100;
-            break;
-        default:
-            printf("Invalid data type.\n");
-            return 1;
-    }
-
-    initializeStack(&stack, elementSize, dataType);
-
-    int choice;
     do {
-    	system ("cls");
-        printf("STACKS and OPERATIONS\n\tPlease provide input for operation\n\n");
+        system(CLEAR);
+        printf("<@@ STACK OPERATIONS @@>\n\n");
         printf("1. Push\n");
         printf("2. Pop\n");
-        printf("3. Peek\n");
-        printf("4. Traverse Stack\n");
+        printf("3. Traverse\n");
         printf("0. Exit\n");
         printf("\nEnter your choice: ");
         scanf("%d", &choice);
 
         switch (choice) {
-            case 1: {
-                void* value = malloc(elementSize);
-                if (value == NULL) {
-                    printf("Memory allocation failed!\n");
-                    break;
+            case 1:
+                printf("Enter data type (1: Integer, 2: String): ");
+                scanf("%d", &dataType);
+                if (dataType == 1) {
+                    printf("Enter number: ");
+                    scanf("%d", &numValue);
+                    push(&stack, 1, &numValue);
+                } else if (dataType == 2) {
+                    printf("Enter string: ");
+                    scanf(" %[^\n]", strValue);
+                    push(&stack, 2, strValue);
+                } else {
+                    printf("Invalid data type!\n");
                 }
-                switch (dataType) {
-                    case 1:
-                        printf("Enter integer value: ");
-                        scanf("%d", (int*)value);
-                        break;
-                    case 2:
-                        printf("Enter float value: ");
-                        scanf("%f", (float*)value);
-                        break;
-                    case 3:
-                        printf("Enter character value: ");
-                        scanf(" %c", (char*)value);
-                        break;
-                    case 4:
-                        printf("Enter string value: ");
-                        scanf(" %[^\n]", (char*)value);
-                        break;
-                }
-                push(&stack, value);
-                free(value);
                 break;
-            }
-            case 2: {
-                void* value = malloc(elementSize);
-                if (value == NULL) {
-                    printf("Memory allocation failed!\n");
-                    break;
+            case 2:
+                if (!isEmpty(&stack)) {
+                    if (stack.top->dataType == 1) {
+                        pop(&stack, &numValue);
+                        printf("Popped: %d\n", numValue);
+                    } else if (stack.top->dataType == 2) {
+                        pop(&stack, strValue);
+                        printf("\n\tPopped: %s\n", strValue);
+                    }
+                } else {
+                    printf("Stack is empty!\n");
                 }
-                pop(&stack, value);
-                switch (dataType) {
-                    case 1:
-                        printf("Popped value: %d\n", *(int*)value);
-                        break;
-                    case 2:
-                        printf("Popped value: %f\n", *(float*)value);
-                        break;
-                    case 3:
-                        printf("Popped value: %c\n", *(char*)value);
-                        break;
-                    case 4:
-                        printf("Popped value: %s\n", (char*)value);
-                        break;
-                }
-                free(value);
                 break;
-            }
-            case 3: {
-                void* value = malloc(elementSize);
-                if (value == NULL) {
-                    printf("Memory allocation failed!\n");
-                    break;
-                }
-                peek(&stack, value);
-                switch (dataType) {
-                    case 1:
-                        printf("Top value: %d\n", *(int*)value);
-                        break;
-                    case 2:
-                        printf("Top value: %f\n", *(float*)value);
-                        break;
-                    case 3:
-                        printf("Top value: %c\n", *(char*)value);
-                        break;
-                    case 4:
-                        printf("Top value: %s\n", (char*)value);
-                        break;
-                }
-                free(value);
-                break;
-            }
-            case 4:
+            case 3:
                 traverseStack(&stack);
                 break;
             case 0:
                 printf("Exiting...\n");
                 break;
             default:
-                printf("Invalid choice.\n");
+                printf("Invalid choice!\n");
         }
+        printf("\n"); 
+        if (choice != 0) {
+            printf("Press Enter to continue...");
+            getchar(); 
+            getchar(); 
+        }
+
     } while (choice != 0);
 
-    while (stack.top != NULL) {
+    
+    while (!isEmpty(&stack)) {
         Node* temp = stack.top;
         stack.top = stack.top->next;
         free(temp->data);
